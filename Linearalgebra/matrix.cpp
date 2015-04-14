@@ -409,3 +409,51 @@ Matrix<T> transpos(Matrix<T>& mat)
 
    return res;
 }
+
+template<typename T>
+T det(const Matrix<T>& mat)
+{
+    T d = 1;
+    Matrix<T> tmp(mat);
+
+    if(tmp.rows() != tmp.cols())
+        throw MyException("det(tmp): tmprix is not square!");
+
+    if(tmp.rows() == 1)
+        return tmp(0, 0);
+
+    if(tmp.rows() == 2)
+        return tmp(0, 0) * tmp(1, 1) - tmp(1, 0) * tmp(0, 1);
+
+    if(tmp(0, 0) == 0)
+    {
+        int r = 1;
+
+        while(r < tmp.rows() && tmp(r, 0) == 0)r++;
+
+        if(r >= tmp.rows())
+            return 0;
+        else
+            tmp.swapRows(0, r);
+    }
+
+
+    T n;
+    for(int i=0; i<tmp.rows()-1; ++i)
+    {
+        for(int j=i+1; j<tmp.rows(); ++j)
+        {
+            n = tmp(j, i) / tmp(i, i);
+
+            for(int k=i+1; k<tmp.cols(); ++k)
+            {
+                tmp(j, k) -= tmp(i, k) * n;
+            }
+            tmp(j, i) = 0;
+        }
+        d *= tmp(i, i);
+    }
+    d *= tmp(tmp.rows()-1, tmp.cols()-1);
+
+    return d;
+}

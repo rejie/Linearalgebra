@@ -9,13 +9,19 @@ int main(int argc, char *argv[])
 
     try
     {
-        Matrix<int> mat = identity<int>(10);
+        double c;
+        Matrix<double> mat(50, 50);
 
-        mat.swapRows(0, 2);
-        mat.swapCols(0, 1);
-        mat = transpos(mat);
-
-        cout << mat.toString();
+        for(int i=0; i<mat.rows(); ++i)
+        {
+            for(int j=0; j<mat.cols(); ++j)
+            {
+                cin >> c;
+                mat(i, j) = c;
+            }
+        }
+        c = det<double>(mat);
+        cout << c << endl;
     }
     catch(const MyException& e)
     {

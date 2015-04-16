@@ -631,3 +631,67 @@ int Rank(const Matrix<T>& mat)
 
     return d;
 }
+
+template<typename T>
+Matrix<T> Inv(const Matrix<T>& mat)
+{
+    if(mat.rows() != mat.cols())
+        throw MyException("Inv(mat): Matrix is not square!");
+
+    T n;
+    int maxr, size = mat.rows();
+    Matrix<T> tmp(mat), invm(Identity<T>(size));
+
+    for(int i=0; i<size-1; ++i)
+    {
+        maxr = i;
+
+        for(int j=i+1; j<size; ++j)
+        {
+            if(std::abs(tmp(maxr, i)) < std::abs(tmp(j, i)))
+                maxr = j;
+        }
+
+        if(std::abs(tmp(maxr, i)) < ERR)
+           throw MyException("Inv(mat): Matrix is singular!");
+
+        if(maxr != i)
+        {
+            tmp.swapRows(maxr, i);
+            invm.swapRows(maxr, i);
+        }
+
+        for(int j=i+1; j<size; ++j)
+        {
+            n = tmp(j, i) / tmp(i, i);
+            for(int k=0; k<size; ++k)
+            {
+                tmp(j, k) -= tmp(i, k) * n;
+                invm(j, k) -= invm(i, k) * n;
+            }
+        }
+    }
+
+    for(int i=0; i<size; ++i)
+    {
+        n = tmp(i, i);
+        for(int j=0; j<size; ++j)
+        {
+            invm(i, j) /= n;
+            tmp(i, j) /= n;
+        }
+    }
+
+    for(int i=size-1; i>0; --i)
+    {
+        for(int j=i-1; j>=0; --j)
+        {
+           for(int k=size-1; k>=0; --k)
+           {
+               invm(j, k) -= invm(i, k) * tmp(j, i);
+           }
+        }
+    }
+
+    return invm;
+}

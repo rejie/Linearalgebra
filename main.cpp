@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
     try
     {
         double c;
-        Matrix<double> mat(50, 50);
+        Matrix<double> mat(4, 4), L(4, 4), U(4, 4);
 
         for(int i=0; i<mat.rows(); ++i)
         {
@@ -20,8 +20,16 @@ int main(int argc, char *argv[])
                 mat(i, j) = c;
             }
         }
-        c = det<double>(mat);
-        cout << c << endl;
+       if(LU<double>(mat, L, U))
+       {
+           cout << endl;
+           cout << L.toString() << endl;
+           cout << U.toString() << endl;
+       }
+       else
+       {
+           cout << "Matrix is singular!" << endl;
+       }
     }
     catch(const MyException& e)
     {

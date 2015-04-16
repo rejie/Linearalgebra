@@ -135,7 +135,7 @@ std::string Matrix<T>::toString()
     {
         for(int j=0; j<_col; ++j)
         {
-            ss << data[i][j] << " ";
+            ss << std::fixed << data[i][j] << " ";
         }
         ss << "\n";
     }
@@ -377,7 +377,7 @@ bool Matrix<T>::operator==(const Matrix<T>& mat)
 
 //matrix operation=========================================================================
 template<typename T>
-Matrix<T> identity(int dim)
+Matrix<T> Identity(int dim)
 {
     if(dim > 0)
     {
@@ -395,7 +395,7 @@ Matrix<T> identity(int dim)
 }
 
 template<typename T>
-Matrix<T> transpos(Matrix<T>& mat)
+Matrix<T> Transpos(Matrix<T>& mat)
 {
    Matrix<T> res(mat.cols(), mat.rows());
 
@@ -411,13 +411,13 @@ Matrix<T> transpos(Matrix<T>& mat)
 }
 
 template<typename T>
-T det(const Matrix<T>& mat)
+T Det(const Matrix<T>& mat)
 {
     T d = 1;
     Matrix<T> tmp(mat);
 
     if(tmp.rows() != tmp.cols())
-        throw MyException("det(tmp): tmprix is not square!");
+        throw MyException("Det(mat): Matrix is not square!");
 
     if(tmp.rows() == 1)
         return tmp(0, 0);
@@ -425,22 +425,29 @@ T det(const Matrix<T>& mat)
     if(tmp.rows() == 2)
         return tmp(0, 0) * tmp(1, 1) - tmp(1, 0) * tmp(0, 1);
 
-    if(tmp(0, 0) == 0)
-    {
-        int r = 1;
-
-        while(r < tmp.rows() && tmp(r, 0) == 0)r++;
-
-        if(r >= tmp.rows())
-            return 0;
-        else
-            tmp.swapRows(0, r);
-    }
-
-
     T n;
+    int r, first;
     for(int i=0; i<tmp.rows()-1; ++i)
     {
+        r = i;
+        first = i;
+
+        while(first < tmp.cols() && tmp(i, first) == 0.0)
+        {
+            r = i + 1;
+
+            while(r < tmp.rows() && tmp(r, first) == 0.0)r++;
+
+            if(r >= tmp.rows())
+                first++;
+        }
+
+        if(first >= tmp.cols())
+            return 0;
+
+        if(r != i)
+            tmp.swapRows(r, i);
+
         for(int j=i+1; j<tmp.rows(); ++j)
         {
             n = tmp(j, i) / tmp(i, i);
@@ -456,4 +463,121 @@ T det(const Matrix<T>& mat)
     d *= tmp(tmp.rows()-1, tmp.cols()-1);
 
     return d;
+}
+
+template<typename T>
+bool LU(const Matrix<T>& mat, Matrix<T>& L, Matrix<T>& U)
+{
+    if(mat.rows() != mat.cols())
+        throw MyException("LU(mat): Matrix is not square!");
+
+
+    T n;
+    int maxr, first, size = mat.rows();
+    Matrix<T> l(size, size), u(mat);
+
+    for(int i=0; i<size-1; ++i)
+    {
+        first = i;
+        maxr = i;
+        while(first < size)
+        {
+
+            for(int j=i+1; j<size; ++j)
+            {
+                if(std::abs(u(maxr, first)) < std::abs(u(j, first)))
+                    maxr = j;
+            }
+
+            if(u(maxr, first) == 0)
+                first++;
+            else
+                break;
+        }
+
+        if(first >= size)
+            break;
+
+        if(maxr != i)
+        {
+            u.swapRows(maxr, i);
+            l.swapRows(maxr, i);
+        }
+
+        for(int j=i+1; j<size; ++j)
+        {
+            l(j, first) = u(j, first) / u(i, first);
+            l(j, first) = (l(j, first) == 0.0) ? 0.0 : l(j, first);
+        }
+
+        for(int j=i+1; j<size; ++j)
+        {
+            n = u(j, first) / u(i, first);
+            for(int k=i+1; k<size; ++k)
+            {
+                u(j, k) -= u(i, k) * n;
+            }
+            u(j, first) = 0;
+        }
+    }
+
+    for(int i=0; i<size; ++i)
+        l(i, i) = 1;
+
+    L = l;
+    U = u;
+
+    return true;
+}
+
+template<typename T>
+Matrix<T> Minor(const Matrix<T>& mat, int r, int c)
+{
+    int n = mat.rows();
+
+    if(mat.rows() != mat.cols())
+        throw MyException("Minor(mat): Matrix is not suqare!");
+
+    if(n == 1)
+        throw MyException("Minor(mat): Matrix size <= 1*1");
+
+    Matrix<T> m(n-1, n-1);
+    for(int i=0, ii=0; i<n; ++i)
+    {
+        if(i == r)continue;
+
+        for(int j=0, jj=0; j<n; ++j)
+        {
+            if(j == c)continue;
+
+            m(ii, jj) = mat(i, j);
+            jj++;
+        }
+        ii++;
+    }
+
+    return m;
+}
+
+template<typename T>
+Matrix<T> Adj(const Matrix<T>& mat)
+{
+    int n = mat.rows();
+
+    if(mat.rows() != mat.cols())
+        throw MyException("Adj(mat): Matrix is not square!");
+
+    if(n == 1)
+        throw MyException("Adj(mat): Matrix size <= 1*1");
+
+    Matrix<T> res(n, n);
+    for(int i=0, k=1; i<n; ++i)
+    {
+        for(int j=0; j<n; ++j, k*=-1)
+        {
+           res(i, j) = k * Det<T>(Minor<T>(mat, i, j));
+        }
+    }
+
+    return Transpos<T>(res);
 }

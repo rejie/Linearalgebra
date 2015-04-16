@@ -413,7 +413,6 @@ Matrix<T> Transpos(Matrix<T>& mat)
 template<typename T>
 T Det(const Matrix<T>& mat)
 {
-    T d = 1;
     Matrix<T> tmp(mat);
 
     if(tmp.rows() != tmp.cols())
@@ -425,28 +424,32 @@ T Det(const Matrix<T>& mat)
     if(tmp.rows() == 2)
         return tmp(0, 0) * tmp(1, 1) - tmp(1, 0) * tmp(0, 1);
 
-    T n;
-    int r, first;
+    T n, d = 1, size = tmp.rows();
+    int maxr, first;
     for(int i=0; i<tmp.rows()-1; ++i)
     {
-        r = i;
+        maxr = i;
         first = i;
-
-        while(first < tmp.cols() && tmp(i, first) == 0.0)
+        while(first < size)
         {
-            r = i + 1;
 
-            while(r < tmp.rows() && tmp(r, first) == 0.0)r++;
+            for(int j=i+1; j<size; ++j)
+            {
+                if(std::abs(tmp(maxr, first)) < std::abs(tmp(j, first)))
+                    maxr = j;
+            }
 
-            if(r >= tmp.rows())
+            if(std::abs(tmp(maxr, first)) < ERR)
                 first++;
+            else
+                break;
         }
 
         if(first >= tmp.cols())
             return 0;
 
-        if(r != i)
-            tmp.swapRows(r, i);
+        if(maxr != i)
+            tmp.swapRows(maxr, i);
 
         for(int j=i+1; j<tmp.rows(); ++j)
         {
@@ -489,7 +492,7 @@ bool LU(const Matrix<T>& mat, Matrix<T>& L, Matrix<T>& U)
                     maxr = j;
             }
 
-            if(u(maxr, first) == 0)
+            if(std::abs(u(maxr, first)) < ERR)
                 first++;
             else
                 break;
@@ -507,7 +510,7 @@ bool LU(const Matrix<T>& mat, Matrix<T>& L, Matrix<T>& U)
         for(int j=i+1; j<size; ++j)
         {
             l(j, first) = u(j, first) / u(i, first);
-            l(j, first) = (l(j, first) == 0.0) ? 0.0 : l(j, first);
+            l(j, first) = (l(j, first) == 0.0) ? 0.0 : l(j, first); // avoid -0
         }
 
         for(int j=i+1; j<size; ++j)
@@ -580,4 +583,51 @@ Matrix<T> Adj(const Matrix<T>& mat)
     }
 
     return Transpos<T>(res);
+}
+
+template<typename T>
+int Rank(const Matrix<T>& mat)
+{
+    T n;
+    int maxr, first, size = mat.rows(), d = 0;
+    Matrix<T> tmp(mat);
+
+    for(int i=0; i<size-1; ++i)
+    {
+        first = i;
+        maxr = i;
+        while(first < size)
+        {
+
+            for(int j=i+1; j<size; ++j)
+            {
+                if(std::abs(tmp(maxr, first)) < std::abs(tmp(j, first)))
+                    maxr = j;
+            }
+
+            if(std::abs(tmp(maxr, first)) < 1e-7)
+                first++;
+            else
+                break;
+        }
+
+        if(first >= size)
+            break;
+
+        if(maxr != i)
+            tmp.swapRows(maxr, i);
+
+        for(int j=i+1; j<size; ++j)
+        {
+            n = tmp(j, first) / tmp(i, first);
+            for(int k=i+1; k<size; ++k)
+            {
+                tmp(j, k) -= tmp(i, k) * n;
+            }
+            tmp(j, first) = 0;
+        }
+        d++;
+    }
+
+    return d;
 }

@@ -1,9 +1,12 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 
+#define ERR 1e-7
+
 #include <vector>
 #include <sstream>
 #include <string>
+#include <cmath>
 #include "myexception.h"
 
 

@@ -16,8 +16,8 @@ TEMPLATE = app
 
 INCLUDEPATH += $$PWD/Linearalgebra/
 
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    Linearalgebra/matrix.cpp
 
-HEADERS += \
-    matrix.h \
-    myexception.h
+HEADERS += Linearalgebra/matrix.h \
+    Linearalgebra/myexception.h

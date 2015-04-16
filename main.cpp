@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
     try
     {
         double c;
-        Matrix<double> mat(4, 4), L(4, 4), U(4, 4);
+        Matrix<double> mat(10, 10), L(3, 3), U(3, 3);
 
         for(int i=0; i<mat.rows(); ++i)
         {
@@ -20,16 +20,8 @@ int main(int argc, char *argv[])
                 mat(i, j) = c;
             }
         }
-       if(LU<double>(mat, L, U))
-       {
-           cout << endl;
-           cout << L.toString() << endl;
-           cout << U.toString() << endl;
-       }
-       else
-       {
-           cout << "Matrix is singular!" << endl;
-       }
+       c = Rank<double>(mat);
+       cout << endl << c << endl;
     }
     catch(const MyException& e)
     {

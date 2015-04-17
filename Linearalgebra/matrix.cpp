@@ -130,12 +130,14 @@ template<typename T>
 std::string Matrix<T>::toString()
 {
     std::stringstream ss;
+    T v;
 
     for(int i=0; i<_row; ++i)
     {
         for(int j=0; j<_col; ++j)
         {
-            ss << std::fixed << data[i][j] << " ";
+            v = std::abs(data[i][j]) < ERR ? 0.0 : data[i][j];
+            ss << std::fixed << v << " ";
         }
         ss << "\n";
     }
@@ -510,7 +512,6 @@ bool LU(const Matrix<T>& mat, Matrix<T>& L, Matrix<T>& U)
         for(int j=i+1; j<size; ++j)
         {
             l(j, first) = u(j, first) / u(i, first);
-            l(j, first) = (l(j, first) == 0.0) ? 0.0 : l(j, first); // avoid -0
         }
 
         for(int j=i+1; j<size; ++j)
@@ -664,9 +665,13 @@ Matrix<T> Inv(const Matrix<T>& mat)
         for(int j=i+1; j<size; ++j)
         {
             n = tmp(j, i) / tmp(i, i);
-            for(int k=0; k<size; ++k)
+            for(int k=i; k<size; ++k)
             {
                 tmp(j, k) -= tmp(i, k) * n;
+            }
+
+            for(int k=0; k<size; ++k)
+            {
                 invm(j, k) -= invm(i, k) * n;
             }
         }

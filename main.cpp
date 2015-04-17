@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
     try
     {
         double c;
-        Matrix<double> mat(50, 50), L(3, 3), U(3, 3);
+        Matrix<double> mat(30, 30), L(3, 3), U(3, 3);
 
         for(int i=0; i<mat.rows(); ++i)
         {
@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
             }
         }
 
-       cout << endl << Inv<double>(mat).toString() << endl;
+       cout << endl << (Inv<double>(mat)*mat).toString() << endl;
     }
     catch(const MyException& e)
     {

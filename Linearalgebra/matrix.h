@@ -8,7 +8,7 @@
 #include <string>
 #include <cmath>
 #include "myexception.h"
-
+#include "vector.h"
 
 template<typename T>
 class Matrix
@@ -24,9 +24,11 @@ private:
     bool checkc(int i) const {return i >=0 && i < _col;}
 
 public:
+    Matrix();
     Matrix(int row, int col, const T& init_var);
     Matrix(int row, int col);
     Matrix(const Matrix<T>& mat);
+    Matrix(const Vector<T>& vec);
     ~Matrix();
 
     //get data
@@ -54,6 +56,7 @@ public:
     Matrix<T>& operator-=(const Matrix<T>& mat);
     Matrix<T>& operator-=(const T& var);
 
+    Vector<T> operator*(const Vector<T>& vec);
     Matrix<T> operator*(const Matrix<T>& mat);
     Matrix<T> operator*(const T& var);
     Matrix<T>& operator*=(const Matrix<T>& mat);

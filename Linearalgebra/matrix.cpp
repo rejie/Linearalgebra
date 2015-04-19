@@ -1,6 +1,17 @@
 #include "matrix.h"
 
 template<typename T>
+Matrix<T>::Matrix()
+{
+    data.resize(1);
+    mdata.resize(1, 0);
+    data[0] = &mdata[0];
+
+    _row = 1;
+    _col = 1;
+}
+
+template<typename T>
 Matrix<T>::Matrix(int row, int col, const T& init_var)
 {
 
@@ -18,9 +29,6 @@ Matrix<T>::Matrix(int row, int col, const T& init_var)
     }
     else
         throw MyException("Matrix Initialize Error!");
-
-
-
 }
 
 template<typename T>
@@ -58,6 +66,21 @@ Matrix<T>::Matrix(const Matrix<T>& mat)
     _col = mat.cols();
     */
     *this = mat;
+}
+
+template<typename T>
+Matrix<T>::Matrix(const Vector<T>& vec)
+{
+    int n = vec.getDim();
+
+    resize(n, 1);
+    for(int i=0; i<n; ++i)
+    {
+        data[i][0] = vec(i);
+    }
+
+    _row = n;
+    _col = 1;
 }
 
 template<typename T>
@@ -281,6 +304,26 @@ Matrix<T>& Matrix<T>::operator-=(const T& var)
 }
 
 template<typename T>
+Vector<T> Matrix<T>::operator*(const Vector<T>& vec)
+{
+    int n = vec.getDim();
+    Vector<T> res(n);
+
+    if(_col != n)
+        throw MyException("Matrix multiplication error: dimension not match!");
+
+    for(int i=0; i<_row; ++i)
+    {
+        for(int j=0; j<_col; ++j)
+        {
+            res(i) += data[i][j] * vec(j);
+        }
+    }
+
+    return res;
+}
+
+template<typename T>
 Matrix<T> Matrix<T>::operator*(const Matrix<T>& mat)
 {
     Matrix<T> res(_row, mat.cols());
@@ -471,7 +514,7 @@ T Det(const Matrix<T>& mat)
 }
 
 template<typename T>
-bool LU(const Matrix<T>& mat, Matrix<T>& L, Matrix<T>& U)
+bool LUP(const Matrix<T>& mat, Matrix<T>& L, Matrix<T>& U, Matrix<T>& P)
 {
     if(mat.rows() != mat.cols())
         throw MyException("LU(mat): Matrix is not square!");
@@ -479,7 +522,7 @@ bool LU(const Matrix<T>& mat, Matrix<T>& L, Matrix<T>& U)
 
     T n;
     int maxr, first, size = mat.rows();
-    Matrix<T> l(size, size), u(mat);
+    Matrix<T> l(size, size), u(mat), p(Identity<T>(size));
 
     for(int i=0; i<size-1; ++i)
     {
@@ -507,6 +550,7 @@ bool LU(const Matrix<T>& mat, Matrix<T>& L, Matrix<T>& U)
         {
             u.swapRows(maxr, i);
             l.swapRows(maxr, i);
+            p.swapRows(maxr, i);
         }
 
         for(int j=i+1; j<size; ++j)
@@ -530,8 +574,16 @@ bool LU(const Matrix<T>& mat, Matrix<T>& L, Matrix<T>& U)
 
     L = l;
     U = u;
+    P = p;
 
     return true;
+}
+
+template<typename T>
+bool LU(const Matrix<T>& mat, Matrix<T>& L, Matrix<T>& U)
+{
+    Matrix<T> P;
+    LUP<T>(mat, L, U, P);
 }
 
 template<typename T>

@@ -440,7 +440,7 @@ Matrix<T> Identity(int dim)
 }
 
 template<typename T>
-Matrix<T> Transpos(Matrix<T>& mat)
+Matrix<T> Transpos(const Matrix<T>& mat)
 {
    Matrix<T> res(mat.cols(), mat.rows());
 

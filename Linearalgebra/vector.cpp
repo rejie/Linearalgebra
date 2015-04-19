@@ -24,7 +24,7 @@ std::string Vector<T>::toString()
 
     for(int i=0; i<dimensions; ++i)
     {
-        ss << data[i] << " ";
+        ss << data[i] << "\n";
     }
 
     return ss.str();

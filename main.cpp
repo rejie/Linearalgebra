@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     {
         double c;
         Matrix<double> mat(50, 50);
-        Vector<double> vec(50), res(50);
+        Matrix<double> vec(50, 1), res(50, 1);
 
         for(int i=0; i<mat.rows(); ++i)
         {
@@ -25,13 +25,13 @@ int main(int argc, char *argv[])
             }
         }
         cout << endl;
-        for(int i=0; i<vec.getDim(); ++i)
+        for(int i=0; i<vec.rows(); ++i)
         {
             cin >> c;
-            vec(i) = c;
+            vec(i, 0) = c;
         }
         system("cls");
-        res = solver<double>(mat, vec);
+        res = solverLS<double>(mat, vec);
         cout << endl << res.toString() << endl;
     }
     catch(const MyException& e)

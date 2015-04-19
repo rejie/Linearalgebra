@@ -4,29 +4,30 @@
 #include "vector.h"
 #include "matrix.h"
 
+
 template<typename T>
-Vector<T> solver(const Matrix<T>& mat, const Vector<T>& vec)
+Matrix<T> solver(const Matrix<T>& mat, const Matrix<T>& vec)
 {
-    if(mat.rows() != vec.getDim())
+    if(mat.rows() != vec.rows())
         throw MyException("Error solve linear system: Dimension not match!");
 
-    int n = mat.rows();
+    int n = vec.rows();
     Matrix<T> L(n, n), U(n, n), P(n, n);
-    Vector<T> res(n), tmp(n);
+    Matrix<T> res(n, 1), tmp(n, 1);
 
     LUP<T>(mat, L, U, P);
     tmp = P * vec;
 
     //LUx=b => Ld=b
-    res(0) = tmp(0) / L(0, 0);
+    res(0, 0) = tmp(0, 0) / L(0, 0);
     for(int i=1; i<n; ++i)
     {
-        res(i) = tmp(i);
+        res(i, 0) = tmp(i, 0);
         for(int j=0; j<i; ++j)
         {
-            res(i) -= L(i, j) * res(j);
+            res(i, 0) -= L(i, j) * res(j, 0);
         }
-        res(i) /= L(i, i);
+        res(i, 0) /= L(i, i);
     }
 
     res(n - 1) /= U(n - 1, n - 1);
@@ -34,10 +35,20 @@ Vector<T> solver(const Matrix<T>& mat, const Vector<T>& vec)
     {
         for(int j=n-1; j>i; --j)
         {
-            res(i) -= U(i, j) * res(j);
+            res(i, 0) -= U(i, j) * res(j, 0);
         }
-        res(i) /= U(i, i);
+        res(i, 0) /= U(i, i);
     }
+
+    return res;
+}
+
+template<typename T>
+Matrix<T> solverLS(const Matrix<T>& mat, const Matrix<T>& vec)
+{
+    int n = vec.rows();
+    Matrix<T> AT = Transpos<T>(mat);
+    Matrix<T> res = Inv<T>(AT * mat) * (AT * vec);
 
     return res;
 }

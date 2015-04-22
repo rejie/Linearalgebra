@@ -13,8 +13,10 @@ int main(int argc, char *argv[])
     try
     {
         double c;
-        Matrix<double> mat(50, 50);
-        Matrix<double> vec(50, 1), res(50, 1);
+        int size = 10;
+        Matrix<double> mat(size, size);
+        Matrix<double> v(size, size), d(size, size);
+
 
         for(int i=0; i<mat.rows(); ++i)
         {
@@ -24,15 +26,11 @@ int main(int argc, char *argv[])
                 mat(i, j) = c;
             }
         }
-        cout << endl;
-        for(int i=0; i<vec.rows(); ++i)
-        {
-            cin >> c;
-            vec(i, 0) = c;
-        }
         system("cls");
-        res = solverLS<double>(mat, vec);
-        cout << endl << res.toString() << endl;
+        PM<double>(mat, v, d);
+        cout << endl << v.toString() << endl;
+        cout << endl << d.toString() << endl;
+
     }
     catch(const MyException& e)
     {

@@ -29,6 +29,7 @@ public:
     Matrix(int row, int col);
     Matrix(const Matrix<T>& mat);
     Matrix(const Vector<T>& vec);
+    Matrix(const std::vector< Vector<T> >& vecs);
     ~Matrix();
 
     //get data

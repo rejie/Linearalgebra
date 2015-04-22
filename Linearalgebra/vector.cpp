@@ -1,6 +1,13 @@
 #include "vector.h"
-#include "math.h"
 
+template<typename T>
+Vector<T>::Vector()
+{
+
+   dimensions = 1;
+   data.resize(dimensions);
+
+}
 
 template<typename T>
 Vector<T>::Vector(int d)
@@ -10,8 +17,19 @@ Vector<T>::Vector(int d)
         dimensions = d;
         data.resize(dimensions);
     }
+    else
+        throw MyException("Matrix Initialize Error!");
 
+}
 
+template<typename T>
+Vector<T>::Vector(int d, int init_var)
+{
+
+    if(d > 0){
+        dimensions = d;
+        data.resize(dimensions, init_var);
+    }
     else
         throw MyException("Matrix Initialize Error!");
 
@@ -24,7 +42,7 @@ std::string Vector<T>::toString()
 
     for(int i=0; i<dimensions; ++i)
     {
-        ss << data[i] << "\n";
+        ss << data[i] << " ";
     }
 
     return ss.str();
@@ -54,7 +72,7 @@ Vector<T>& Vector<T>::operator=(const Vector<T>& vec)
     if(&vec == this)
         return *this;
 
-    int new_dimensions = vec.dimensions;
+    int new_dimensions = vec.getDim();
 
     data.resize(new_dimensions);
     for(int i=0; i<new_dimensions; ++i)
@@ -72,7 +90,7 @@ Vector<T> Vector<T>::operator+(const Vector<T>& vec)
 {
     Vector<T> res(dimensions);
 
-    if( dimensions == vec.dimensions )
+    if( dimensions == vec.getDim() )
     {
         for(int i=0; i<dimensions; ++i)
         {
@@ -103,7 +121,7 @@ Vector<T>& Vector<T>::operator-()
 }
 
 template<typename T>
-Vector<T>& Vector<T>::operator-(const Vector<T>& vec)
+Vector<T> Vector<T>::operator-(const Vector<T>& vec)
 {
     Vector<T> tmp = vec;
 
@@ -119,7 +137,7 @@ Vector<T>& Vector<T>::operator-=(const Vector<T>& vec)
 template<typename T>
 T Vector<T>::operator*(const Vector<T>& vec)
 {
-    T dot;
+    T dot = 0;
 
     if( dimensions == vec.getDim() )
     {
@@ -127,11 +145,11 @@ T Vector<T>::operator*(const Vector<T>& vec)
         {
             dot += data[i]*vec(i) ;
         }
+        return dot;
     }
     else
         throw MyException("Vector multiplication error: dimension not match!");
 
-    return dot;
 }
 
 template<typename T>
@@ -148,7 +166,7 @@ Vector<T> Vector<T>::operator*(const T& var)
 }
 
 template<typename T>
-Vector<T&> Vector<T>::operator*=(const T& var)
+Vector<T>& Vector<T>::operator*=(const T& var)
 {
     return *this = this * var;
 }
@@ -174,13 +192,13 @@ Vector<T> Vector<T>::operator/(const T& var)
 template<typename T>
 Vector<T>& Vector<T>::operator/=(const T& var)
 {
-    return *this = this / var;
+    return *this = *this / var;
 }
 
 template<typename T>
 bool Vector<T>::operator==(const Vector<T>& vec)
 {
-    if(dimensions != vec.dimensions)
+    if(dimensions != vec.getDim())
         return false;
 
     for(int i=0; i<dimensions; ++i)
@@ -200,90 +218,85 @@ bool Vector<T>::operator!=(const Vector<T>& vec)
 
 //vector operation=========================================================================
 template<typename T>
-T Vector<T>::norm(const Vector<T>& vec)
+T norm(const Vector<T>& vec)
 {
-    T sum;
-
-    sum = vec * vec;
+    T sum = 0;
+    Vector<T> vec2 = vec;
+    sum = vec2 * vec2;
 
     return sqrt(sum);
 }
 
 template<typename T>
-Vector<T> Vector<T>::normal(const Vector<T>& vec)
+Vector<T> normal(const Vector<T>& vec)
 {
-    Vector<T> res(vec.dimensions);
+    Vector<T> res(vec.getDim());
+    Vector<T> vec2 = vec;
 
-    res = vec / norm(vec);
+    res = vec2 / norm(vec2);
 
     return res;
 }
 
 template<typename T>
-Vector<T> Vector<T>::cross(const Vector<T>& vec1 , const Vector<T>& vec2)
+Vector<T> cross(const Vector<T>& vec1 , const Vector<T>& vec2)
 {
-    Vector<T> res(vec1.dimensions);
+    Vector<T> res(vec1.getDim());
 
-    res(0) = (vec1(1)*vec2(2)) - (vec2(2)*vec1(1));
-    res(1) = -((vec2(0)*vec1(2)) - (vec2(2)*vec1(0)));
-    res(3) = (vec2(0)*vec1(1)) - (vec2(1)*vec1(0));
+
+    res(0) = (vec1(1)*vec2(2)) - (vec1(2)*vec2(1));
+    res(1) = -((vec1(0)*vec2(2)) - (vec1(2)*vec2(0)));
+    res(2) = (vec1(0)*vec2(1)) - (vec1(1)*vec2(0));
 
     return res;
 }
 
 template<typename T>
-T Vector<T>::com(const Vector<T>& vec1 , const Vector<T>& vec2)
+T com(const Vector<T>& vec1 , const Vector<T>& vec2)
 {
     T com;
+    Vector<T> a = vec1;
+    Vector<T> b = vec2;
 
-    com = (vec1 * vec2) / norm(vec2);
+    com = (a * b) / norm(b);
 
     return com;
 }
 
 template<typename T>
-Vector<T> Vector<T>::proj(const Vector<T>& vec1 , const Vector<T>& vec2)
+Vector<T> proj(const Vector<T>& vec1 , const Vector<T>& vec2)
 {
-    Vector<T> res(vec1.dimensions);
+    Vector<T> res(vec1.getDim());
 
-    res = com(vec1,vec2) * normal(vec2);
+
+    res = normal(vec2) * com(vec1,vec2);
 
     return res;
 }
 
 template<typename T>
-T Vector<T>::area(const Vector<T>& vec1 , const Vector<T>& vec2)
+T area(const Vector<T>& vec1 , const Vector<T>& vec2)
 {
     T area;
+    Vector<T> a = vec1;
+    Vector<T> b = vec2;
 
-    area = norm(cross(vec1 , vec2))/2;
+    area = norm(b)*norm(a-proj(a,b))/2;
 
     return area;
 }
 
 template<typename T>
-bool Vector<T>::isParallel(const Vector<T>& vec1 , const Vector<T>& vec2)
+bool isParallel(const Vector<T>& vec1 , const Vector<T>& vec2)
 {
-    Vector<T> res(vec1.dimensions);
-
-    for(int i=0 ; i<vec1.size() ;++i)
-    {
-        if(vec1[i]!=0)
-            res(i) = vec2(i) / vec1(i);
-        else
-            res(i) = vec1(i) / vec2(i);
-    }
-    for(int i=0 ; i<vec1.size()-1 ;++i)
-    {
-        if(abs(res(i)-res(i+1))>1e-7)
-            return false;
-    }
-
-    return true;
+    if(angle(vec1 , vec2)==0)
+        return true;
+    else
+        return false;
 }
 
 template<typename T>
-bool Vector<T>::isOrthogonal(const Vector<T>& vec1 , const Vector<T>& vec2)
+bool isOrthogonal(const Vector<T>& vec1 , const Vector<T>& vec2)
 {
     T dot;
 
@@ -295,19 +308,21 @@ bool Vector<T>::isOrthogonal(const Vector<T>& vec1 , const Vector<T>& vec2)
 }
 
 template<typename T>
-double Vector<T>::angle(const Vector<T>& vec1 , const Vector<T>& vec2)
+double angle(const Vector<T>& vec1 , const Vector<T>& vec2)
 {
     double angle;
+    Vector<T> a = vec1;
+    Vector<T> b = vec2;
 
-    angle = acos((vec1 * vec2)/(norm(vec1)*norm(vec2))) * 180.0 / M_PI;
+    angle = acos((a * b)/(norm(a)*norm(b))) * 180.0 / M_PI;
 
     return angle;
 }
 
 template<typename T>
-Vector<T>  Vector<T>::pn(const Vector<T>& vec1 , const Vector<T>& vec2)
+Vector<T> pn(const Vector<T>& vec1 , const Vector<T>& vec2)
 {
-    Vector<T> res(vec1.dimensions);
+    Vector<T> res(vec1.getDim());
 
     res = cross(vec1 , vec2);
 
@@ -315,22 +330,35 @@ Vector<T>  Vector<T>::pn(const Vector<T>& vec1 , const Vector<T>& vec2)
 }
 
 template<typename T>
-std::vector< Vector<T> > Vector<T>::ob(const std::vector< Vector<T> > v)
+std::vector< Vector<T> > ob(const std::vector< Vector<T> > v)
 {
     std::vector< Vector<T> > res;
     res = v;
 
     for(int i=1 ; i<v.size() ; ++i){
         for(int j=0 ; j<i ; ++j){
-            res[i] -= pj(res[i] , v[j]);
+            res[i] -= proj(v[i] , res[j]);
         }
+    }
+    for(int i=0 ; i<res.size() ; ++i){
         res[i] = normal(res[i]);
     }
-
     return res;
 }
 
+template<typename T>
+T max(const Vector<T>& v)
+{
+    int maxid = 0;
 
+    for(int i=1; i<v.getDim(); ++i)
+    {
+        if(std::abs(v(maxid)) < std::abs(v(i)))
+            maxid = i;
+    }
+
+    return v(maxid);
+}
 
 
 

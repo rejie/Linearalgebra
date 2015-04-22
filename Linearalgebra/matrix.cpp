@@ -84,6 +84,30 @@ Matrix<T>::Matrix(const Vector<T>& vec)
 }
 
 template<typename T>
+Matrix<T>::Matrix(const std::vector< Vector<T> >& vecs)
+{
+    if(!vecs.empty())
+    {
+        int r = vecs[0].getDim(),
+            c = vecs.size();
+
+        resize(r, c);
+        for(int i=0; i<r; ++i)
+        {
+            for(int j=0; j<c; ++j)
+            {
+                data[i][j] = vecs[i](j);
+            }
+        }
+
+        _row = r;
+        _col = c;
+    }
+    else
+        throw MyException("Matrix Initialize Error!");
+}
+
+template<typename T>
 Matrix<T>::~Matrix(){}
 
 //get data=================================================================================
@@ -517,7 +541,7 @@ template<typename T>
 bool LUP(const Matrix<T>& mat, Matrix<T>& L, Matrix<T>& U, Matrix<T>& P)
 {
     if(mat.rows() != mat.cols())
-        throw MyException("LU(mat): Matrix is not square!");
+        throw MyException("LUP(mat): Matrix is not square!");
 
 
     T n;
@@ -580,10 +604,62 @@ bool LUP(const Matrix<T>& mat, Matrix<T>& L, Matrix<T>& U, Matrix<T>& P)
 }
 
 template<typename T>
-bool LU(const Matrix<T>& mat, Matrix<T>& L, Matrix<T>& U)
+bool rref(const Matrix<T>& mat, Matrix<T>& L, Matrix<T>& U)
 {
-    Matrix<T> P;
-    LUP<T>(mat, L, U, P);
+    if(mat.rows() != mat.cols())
+        throw MyException("rref(mat): Matrix is not square!");
+
+    T n;
+    int r, first, size = mat.rows();
+    Matrix<T> l(Identity<T>(size)), u(mat);
+
+    for(int i=0; i<size-1; ++i)
+    {
+        first = i;
+        r = i;
+        while(first < size)
+        {
+            r = i;
+            while(std::abs(u(r, first)) < ERR)r++;
+
+            if(r >= size)
+                first++;
+            else
+                break;
+        }
+
+        if(first >= size)
+            break;
+
+        if(r != i)
+        {
+            u.swapRows(r, i);
+            l.swapRows(r, i);
+        }
+
+        for(int j=i+1; j<size; ++j)
+        {
+            l(j, first) = u(j, first) / u(i, first);
+        }
+
+        for(int j=i+1; j<size; ++j)
+        {
+            n = u(j, first) / u(i, first);
+            for(int k=i+1; k<size; ++k)
+            {
+                u(j, k) -= u(i, k) * n;
+            }
+            u(j, first) = 0;
+        }
+    }
+
+    for(int i=0; i<size; ++i)
+        l(i, i) = 1;
+
+    L = l;
+    U = u;
+
+    return true;
 }
 
 template<typename T>
@@ -751,4 +827,39 @@ Matrix<T> Inv(const Matrix<T>& mat)
     }
 
     return invm;
+}
+
+template<typename T>
+void PM(const Matrix<T>& mat, Matrix<T>& v, Matrix<T>& d, int k = 200)
+{
+    if(mat.rows() != mat.cols())
+        throw MyException("PM(mat): Matrix is not square!");
+
+    int n = mat.rows();
+    Matrix<T> A(mat), tmp(mat), I(Identity<T>(n));
+    Vector<T> X(n, 1), Y(n), Z(n);
+
+    for(int i=0; i<n; ++i)
+    {
+        Z = X;
+        for(int j=0; j<k; ++j)
+        {
+            Y = A * Z;
+            Y = normal<T>(Y);
+            if(norm<T>(Y - Z) < ERR)
+            {
+                Z = Y;
+                break;
+            }
+
+            Z = Y;
+        }
+
+        d(i, i) = ((tmp * Z) * Z) / (Z * Z);
+        for(int j=0; j<n; ++j)
+        {
+            v(j, i) = Z(j);
+        }
+        A = A - I * d(i, i);
+    }
 }

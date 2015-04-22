@@ -46,7 +46,6 @@ Matrix<T> solver(const Matrix<T>& mat, const Matrix<T>& vec)
 template<typename T>
 Matrix<T> solverLS(const Matrix<T>& mat, const Matrix<T>& vec)
 {
-    int n = vec.rows();
     Matrix<T> AT = Transpos<T>(mat);
     Matrix<T> res = Inv<T>(AT * mat) * (AT * vec);
 

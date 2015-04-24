@@ -110,7 +110,7 @@ Matrix<T>::Matrix(const std::vector< Vector<T> >& vecs)
 template<typename T>
 Matrix<T>::~Matrix(){}
 
-//get data=================================================================================
+//get / set=================================================================================
 template<typename T>
 void Matrix<T>::resize(int new_row, int new_col)
 {
@@ -190,6 +190,92 @@ std::string Matrix<T>::toString()
     }
 
     return ss.str();
+}
+
+template<typename T>
+Matrix<T> Matrix<T>::getRow(int i)
+{
+    if(!checkr(i))
+        throw MyException("Row index out of range!");
+
+    Matrix<T> r(1, _col);
+
+    for(int k=0; k<_col; ++k)
+    {
+        r(0, k) = data[i][k];
+    }
+
+    return r;
+}
+
+template<typename T>
+Matrix<T> Matrix<T>::getCol(int i)
+{
+    if(!checkc(i))
+        throw MyException("Column index out of range!");
+
+    Matrix<T> c(_row, 1);
+
+    for(int k=0; k<_row; ++k)
+    {
+        c(k, 0) = data[k][i];
+    }
+
+    return c;
+}
+
+template<typename T>
+void Matrix<T>::setRow(int i, const T& var)
+{
+    if(!checkr(i))
+        throw MyException("Row index out of range!");
+
+    for(int k=0; k<_col; ++k)
+    {
+        data[i][k] = var;
+    }
+}
+
+template<typename T>
+void Matrix<T>::setCol(int i, const T& var)
+{
+    if(!checkc(i))
+        throw MyException("Column index out of range!");
+
+    for(int k=0; k<_row; ++k)
+    {
+        data[k][i] = var;
+    }
+}
+
+template<typename T>
+void Matrix<T>::setRow(int i, const Matrix<T>& vec)
+{
+    if(!checkr(i))
+        throw MyException("Row index out of range!");
+
+    if(vec.cols() != _col)
+        throw MyException("Dimension not match!");
+
+    for(int k=0; k<_col; ++k)
+    {
+        data[i][k] = vec(0, k);
+    }
+}
+
+template<typename T>
+void Matrix<T>::setCol(int i, const Matrix<T>& vec)
+{
+    if(!checkc(i))
+        throw MyException("Column index out of range!");
+
+    if(vec.row() != _row)
+        throw MyException("Dimension not match!");
+
+    for(int k=0; k<_row; ++k)
+    {
+        data[k][i] = vec(k, 0);
+    }
 }
 
 //overload operator========================================================================
@@ -721,7 +807,7 @@ int Rank(const Matrix<T>& mat)
     int maxr, first, size = mat.rows(), d = 0;
     Matrix<T> tmp(mat);
 
-    for(int i=0; i<size-1; ++i)
+    for(int i=0; i<size; ++i)
     {
         first = i;
         maxr = i;
@@ -734,7 +820,7 @@ int Rank(const Matrix<T>& mat)
                     maxr = j;
             }
 
-            if(std::abs(tmp(maxr, first)) < 1e-7)
+            if(std::abs(tmp(maxr, first)) < ERR)
                 first++;
             else
                 break;
@@ -830,36 +916,33 @@ Matrix<T> Inv(const Matrix<T>& mat)
 }
 
 template<typename T>
-void PM(const Matrix<T>& mat, Matrix<T>& v, Matrix<T>& d, int k = 200)
+void PM(const Matrix<T>& mat, Matrix<T>& v, Matrix<T>& d, int k = 500)
 {
     if(mat.rows() != mat.cols())
-        throw MyException("PM(mat): Matrix is not square!");
+            throw MyException("PM(mat): Matrix is not square!");
 
     int n = mat.rows();
-    Matrix<T> A(mat), tmp(mat), I(Identity<T>(n));
-    Vector<T> X(n, 1), Y(n), Z(n);
+    Matrix<T> A(mat);
+    Vector<T> Y(n), Z(n, 1);
+    T ev = 0;
 
-    for(int i=0; i<n; ++i)
+    for(int j=0; j<k; ++j)
     {
-        Z = X;
-        for(int j=0; j<k; ++j)
-        {
-            Y = A * Z;
-            Y = normal<T>(Y);
-            if(norm<T>(Y - Z) < ERR)
-            {
-                Z = Y;
-                break;
-            }
+        Y = normal(A * Z);
+        d(0, 0) = ((A * Z) * Z) / (Z * Z);
 
+        if(std::abs(d(0, 0) - ev) < ERR)
+        {
             Z = Y;
+            break;
         }
 
-        d(i, i) = ((tmp * Z) * Z) / (Z * Z);
-        for(int j=0; j<n; ++j)
-        {
-            v(j, i) = Z(j);
-        }
-        A = A - I * d(i, i);
+        ev = d(0, 0);
+        Z = Y;
+    }
+
+    for(int j=0; j<n; ++j)
+    {
+        v(j, 0) = Z(j);
     }
 }

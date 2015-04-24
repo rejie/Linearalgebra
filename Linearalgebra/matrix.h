@@ -17,7 +17,7 @@ private:
     std::vector<T> mdata;
     std::vector<T*> data;
 
-     int _row, _col;
+    int _row, _col;
 
     bool check(int i, int j) const {return i >=0 && i < _row && j >= 0 && j < _col;}
     bool checkr(int i) const {return i >=0 && i < _row;}
@@ -32,12 +32,18 @@ public:
     Matrix(const std::vector< Vector<T> >& vecs);
     ~Matrix();
 
-    //get data
+    //get / set
      int rows() const {return _row;}
      int cols() const {return _col;}
     void resize( int new_row,  int new_col);
     void swapRows(int ri, int rj);
     void swapCols(int ci, int cj);
+    Matrix<T> getRow(int i);
+    Matrix<T> getCol(int i);
+    void setRow(int i, const T& var);
+    void setCol(int i, const T& var);
+    void setRow(int i, const Matrix<T>& vec);
+    void setCol(int i, const Matrix<T>& vec);
     std::string toString();
 
     //overload operator

@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
         double c;
         int size = 10;
         Matrix<double> mat(size, size);
-        Matrix<double> v(size, size), d(size, size);
+        Matrix<double> v(size, 1), d(1, 1);
 
 
         for(int i=0; i<mat.rows(); ++i)

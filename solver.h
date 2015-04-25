@@ -1,7 +1,6 @@
 #ifndef SOLVER
 #define SOLVER
 
-#include "vector.h"
 #include "matrix.h"
 
 

@@ -32,59 +32,13 @@ Matrix<T>::Matrix(int row, int col, const T& init_var)
 }
 
 template<typename T>
-Matrix<T>::Matrix(int row, int col)
-{
-
-    if(row > 0 && col > 0)
-    {
-        data.resize(row);
-        mdata.resize(row * col, 0);
-        for(int i=0; i<row; ++i)
-        {
-            data[i] = &mdata[i * col];
-        }
-
-        _row = row;
-        _col = col;
-    }
-    else
-        throw MyException("Matrix Initialize Error!");
-}
-
-template<typename T>
 Matrix<T>::Matrix(const Matrix<T>& mat)
 {
-    /*
-    for(int i=0; i<_row; ++i)
-    {
-        for(int j=0; j<_col; ++j)
-        {
-            data[i][j] = mat(i, j);
-        }
-    }
-    _row = mat.rows();
-    _col = mat.cols();
-    */
     *this = mat;
 }
 
 template<typename T>
-Matrix<T>::Matrix(const Vector<T>& vec)
-{
-    int n = vec.getDim();
-
-    resize(n, 1);
-    for(int i=0; i<n; ++i)
-    {
-        data[i][0] = vec(i);
-    }
-
-    _row = n;
-    _col = 1;
-}
-
-template<typename T>
-Matrix<T>::Matrix(const std::vector< Vector<T> >& vecs)
+Matrix<T>::Matrix(const std::vector< Matrix<T> >& vecs)
 {
     if(!vecs.empty())
     {
@@ -278,6 +232,18 @@ void Matrix<T>::setCol(int i, const Matrix<T>& vec)
     }
 }
 
+template<typename T>
+void Matrix<T>::fill(T var)
+{
+    for(int i=0; i<_row; ++i)
+    {
+        for(int j=0; j<_col; ++j)
+        {
+            data[i][j] = var;
+        }
+    }
+}
+
 //overload operator========================================================================
 template<typename T>
 T& Matrix<T>::operator()(int row, int col)
@@ -323,7 +289,7 @@ Matrix<T>& Matrix<T>::operator=(const Matrix<T>& mat)
 }
 
 template<typename T>
-Matrix<T> Matrix<T>::operator+(const Matrix<T>& mat)
+Matrix<T> Matrix<T>::operator+(const Matrix<T>& mat) const
 {
     Matrix<T> res(_row, _col);
 
@@ -344,7 +310,7 @@ Matrix<T> Matrix<T>::operator+(const Matrix<T>& mat)
 }
 
 template<typename T>
-Matrix<T> Matrix<T>::operator+(const T& var)
+Matrix<T> Matrix<T>::operator+(const T& var) const
 {
     Matrix<T> res(_row, _col);
 
@@ -386,14 +352,14 @@ Matrix<T>& Matrix<T>::operator-()
 }
 
 template<typename T>
-Matrix<T> Matrix<T>::operator-(const Matrix<T>& mat)
+Matrix<T> Matrix<T>::operator-(const Matrix<T>& mat) const
 {
     Matrix<T> tmp_mat = mat;
     return *this + (-tmp_mat);
 }
 
 template<typename T>
-Matrix<T> Matrix<T>::operator-(const T& var)
+Matrix<T> Matrix<T>::operator-(const T& var) const
 {
     T tmp_var = var;
     return *this + (-tmp_var);
@@ -414,27 +380,7 @@ Matrix<T>& Matrix<T>::operator-=(const T& var)
 }
 
 template<typename T>
-Vector<T> Matrix<T>::operator*(const Vector<T>& vec)
-{
-    int n = vec.getDim();
-    Vector<T> res(n);
-
-    if(_col != n)
-        throw MyException("Matrix multiplication error: dimension not match!");
-
-    for(int i=0; i<_row; ++i)
-    {
-        for(int j=0; j<_col; ++j)
-        {
-            res(i) += data[i][j] * vec(j);
-        }
-    }
-
-    return res;
-}
-
-template<typename T>
-Matrix<T> Matrix<T>::operator*(const Matrix<T>& mat)
+Matrix<T> Matrix<T>::operator*(const Matrix<T>& mat) const
 {
     Matrix<T> res(_row, mat.cols());
 
@@ -451,6 +397,14 @@ Matrix<T> Matrix<T>::operator*(const Matrix<T>& mat)
             }
         }
     }
+    else if(_col == 1 && _col == mat.cols() && _row == mat.rows())
+    {
+        res.resize(1, 1);
+        for(int i=0; i<_row; ++i)
+        {
+            res(0) += data[i][0] * mat(i);
+        }
+    }
     else
         throw MyException("Matrix multiplication error: dimension not match!");
 
@@ -458,7 +412,7 @@ Matrix<T> Matrix<T>::operator*(const Matrix<T>& mat)
 }
 
 template<typename T>
-Matrix<T> Matrix<T>::operator*(const T& var)
+Matrix<T> Matrix<T>::operator*(const T& var) const
 {
     Matrix<T> res(_row, _col);
 
@@ -486,7 +440,7 @@ Matrix<T>& Matrix<T>::operator*=(const T& var)
 }
 
 template<typename T>
-Matrix<T> Matrix<T>::operator/(const T& var)
+Matrix<T> Matrix<T>::operator/(const T& var) const
 {
     Matrix res(_row, _col);
 
@@ -926,9 +880,10 @@ void PM(const Matrix<T>& mat, Matrix<T>& v, Matrix<T>& d, int k = 500)
 
     int n = mat.rows();
     Matrix<T> A(mat);
-    Vector<T> Y(n), Z(n, 1);
+    Matrix<T> Y(n), Z(n);
     T ev = 0;
 
+    Z.fill(1);
     for(int j=0; j<k; ++j)
     {
         Y = normal(A * Z);
@@ -1108,4 +1063,154 @@ void eigen(const Matrix<T>& mat, Matrix<T>& vec, Matrix<T>& val)
             tmp = mat;
         }
     }
+}
+
+//vector operator========================================================================
+template<typename T>
+T dot(const Matrix<T>& vec1, const Matrix<T>& vec2)
+{
+    Matrix<T> res(vec1);
+    res = Transpos(res) * vec2;
+
+    return res(0);
+}
+
+template<typename T>
+T norm(const Matrix<T>& vec)
+{
+    T sum = 0;
+    Matrix<T> vec2(vec);
+    sum = dot(vec2, vec2);
+
+    return sqrt(sum);
+}
+
+template<typename T>
+Matrix<T> normal(const Matrix<T>& vec)
+{
+    Matrix<T> res(vec.getDim());
+    Matrix<T> vec2(vec);
+
+    res = vec2 / norm(vec2);
+
+    return res;
+}
+
+template<typename T>
+Matrix<T> cross(const Matrix<T>& vec1 , const Matrix<T>& vec2)
+{
+    Matrix<T> res(vec1.getDim());
+
+
+    res(0) = (vec1(1)*vec2(2)) - (vec1(2)*vec2(1));
+    res(1) = -((vec1(0)*vec2(2)) - (vec1(2)*vec2(0)));
+    res(2) = (vec1(0)*vec2(1)) - (vec1(1)*vec2(0));
+
+    return res;
+}
+
+template<typename T>
+T com(const Matrix<T>& vec1 , const Matrix<T>& vec2)
+{
+    T com;
+    Matrix<T> a = vec1;
+    Matrix<T> b = vec2;
+
+    com = (a * b) / norm(b);
+
+    return com;
+}
+
+template<typename T>
+Matrix<T> proj(const Matrix<T>& vec1 , const Matrix<T>& vec2)
+{
+    Matrix<T> res(vec1.getDim());
+
+
+    res = normal(vec2) * com(vec1,vec2);
+
+    return res;
+}
+
+template<typename T>
+T area(const Matrix<T>& vec1 , const Matrix<T>& vec2)
+{
+    T area;
+    Matrix<T> a = vec1;
+    Matrix<T> b = vec2;
+
+    area = norm(b)*norm(a-proj(a,b))/2;
+
+    return area;
+}
+
+template<typename T>
+bool isParallel(const Matrix<T>& vec1 , const Matrix<T>& vec2)
+{
+    if(angle(vec1 , vec2)==0)
+        return true;
+    else
+        return false;
+}
+
+template<typename T>
+bool isOrthogonal(const Matrix<T>& vec1 , const Matrix<T>& vec2)
+{
+    T dot;
+
+    dot = vec1 * vec2;
+    if(dot==0)
+        return true;
+    else
+        return false;
+}
+
+template<typename T>
+double angle(const Matrix<T>& vec1 , const Matrix<T>& vec2)
+{
+    double angle;
+    Matrix<T> a = vec1;
+    Matrix<T> b = vec2;
+
+    angle = acos((a * b)/(norm(a)*norm(b))) * 180.0 / M_PI;
+
+    return angle;
+}
+
+template<typename T>
+Matrix<T> pn(const Matrix<T>& vec1 , const Matrix<T>& vec2)
+{
+    Matrix<T> res(vec1.getDim());
+
+    res = cross(vec1 , vec2);
+
+    return res;
+}
+
+template<typename T>
+bool IsLT(const std::vector< Matrix<T> > v)
+{
+    Matrix<T> res(v);
+
+    if(Rank(res)!=v.size())
+        return false;
+    else
+        return true;
+}
+
+template<typename T>
+std::vector< Matrix<T> > ob(const std::vector< Matrix<T> > v)
+{
+    std::vector< Matrix<T> > res;
+    res = v;
+
+    for(int i=1 ; i<v.size() ; ++i){
+        for(int j=0 ; j<i ; ++j){
+            res[i] -= proj(v[i] , res[j]);
+        }
+    }
+    for(int i=0 ; i<res.size() ; ++i){
+        res[i] = normal(res[i]);
+    }
+    return res;
 }

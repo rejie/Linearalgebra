@@ -12,6 +12,7 @@ int main(int argc, char *argv[])
     try
     {
        Vecd v(3);
+       Matd
        double d;
        for(int i=0; i<v.getDim(); ++i)
        {

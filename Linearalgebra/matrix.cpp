@@ -1112,13 +1112,13 @@ Matrix<T> cross(const Matrix<T>& vec1 , const Matrix<T>& vec2)
 template<typename T>
 T com(const Matrix<T>& vec1 , const Matrix<T>& vec2)
 {
-    T com;
     Matrix<T> a = vec1;
     Matrix<T> b = vec2;
+    Matrix<T> res;
 
-    com = (a * b) / norm(b);
+    res = (a * b) / norm(b);
 
-    return com;
+    return res(0, 0);
 }
 
 template<typename T>
@@ -1171,8 +1171,10 @@ double angle(const Matrix<T>& vec1 , const Matrix<T>& vec2)
     double angle;
     Matrix<T> a = vec1;
     Matrix<T> b = vec2;
+    Matrix<T> res;
 
-    angle = acos((a * b)/(norm(a)*norm(b))) * 180.0 / M_PI;
+    res = a * b;
+    angle = acos(res(0, 0)/(norm(a)*norm(b))) * 180.0 / M_PI;
 
     return angle;
 }

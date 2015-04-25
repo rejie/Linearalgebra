@@ -13,9 +13,9 @@ int main(int argc, char *argv[])
     try
     {
         double c;
-        int size = 10;
+        int size = 3;
         Matrix<double> mat(size, size);
-        Matrix<double> v(size, 1), d(1, 1);
+        Matrix<double> v(size, size), d(size, size);
 
 
         for(int i=0; i<mat.rows(); ++i)
@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
             }
         }
         system("cls");
-        PM<double>(mat, v, d);
+        eigen<double>(mat, v, d);
         cout << endl << v.toString() << endl;
         cout << endl << d.toString() << endl;
 

@@ -269,7 +269,7 @@ void Matrix<T>::setCol(int i, const Matrix<T>& vec)
     if(!checkc(i))
         throw MyException("Column index out of range!");
 
-    if(vec.row() != _row)
+    if(vec.rows() != _row)
         throw MyException("Dimension not match!");
 
     for(int k=0; k<_row; ++k)
@@ -604,17 +604,20 @@ T Det(const Matrix<T>& mat)
             return 0;
 
         if(maxr != i)
+        {
             tmp.swapRows(maxr, i);
+            d *= -1;
+        }
 
         for(int j=i+1; j<tmp.rows(); ++j)
         {
-            n = tmp(j, i) / tmp(i, i);
+            n = tmp(j, first) / tmp(i, first);
 
             for(int k=i+1; k<tmp.cols(); ++k)
             {
                 tmp(j, k) -= tmp(i, k) * n;
             }
-            tmp(j, i) = 0;
+            tmp(j, first) = 0;
         }
         d *= tmp(i, i);
     }
@@ -706,7 +709,7 @@ bool rref(const Matrix<T>& mat, Matrix<T>& L, Matrix<T>& U)
         while(first < size)
         {
             r = i;
-            while(std::abs(u(r, first)) < ERR)r++;
+            while(r < size && std::abs(u(r, first)) < ERR)r++;
 
             if(r >= size)
                 first++;
@@ -944,5 +947,165 @@ void PM(const Matrix<T>& mat, Matrix<T>& v, Matrix<T>& d, int k = 500)
     for(int j=0; j<n; ++j)
     {
         v(j, 0) = Z(j);
+    }
+}
+
+template<typename T>
+T trace(const Matrix<T>& mat)
+{
+    if(mat.rows() != mat.cols())
+        throw MyException("Matrix is not square");
+
+    int n = mat.rows();
+    T t = 0;
+
+    for(int i=0; i<n; ++i)
+    {
+        t += mat(i, i);
+    }
+
+    return t;
+}
+
+template<typename T>
+void eigen(const Matrix<T>& mat, Matrix<T>& vec, Matrix<T>& val)
+{
+    if(mat.rows() != mat.cols())
+        throw MyException("Matrix is not square");
+
+    int n = mat.rows();
+    T t = trace(mat),
+      d = Det(mat),
+      check = 0;
+
+    if(n == 2)
+    {
+
+        T sq;
+
+        check = t * t - 4 * d;
+
+        if(std::abs(check) < ERR)
+        {
+            val(0, 0) = val(1, 1) = t / 2;
+        }
+        else
+        {
+            sq = std::sqrt(check);
+            val(0, 0) = (t + sq) / 2;
+            val(1, 1) = (t - sq) / 2;
+        }
+    }
+    else
+    {
+        T alpha, beta;
+        T b = -t,
+          c = 0,
+          md = -d,
+          term, r, dummy;
+
+        for(int i=0; i<3; ++i)
+        {
+            for(int j=i+1; j<3; ++j)
+            {
+                c += mat(i, i) * mat(j, j);
+                c -= mat(i, j) * mat(j, i);
+            }
+        }
+
+        alpha = (-md * 27 + b * (9 * c - 2 * b * b)) / 54;
+        beta = (c * 3 - (b * b)) / 9;
+        check = alpha * alpha + beta * beta * beta;
+        term = (b / 3);
+
+        if(std::abs(check) < ERR)
+        {
+            r = (alpha < 0) ? -std::pow(-alpha, 1.0/3.0) : std::pow(alpha, 1.0/3.0);
+            val(0, 0) = -term + 2 * r;
+            val(1, 1) = val(2, 2) = -(r + term);
+        }
+        else
+        {
+            beta = -beta;
+            dummy = beta * beta * beta;
+            dummy = std::acos(alpha / std::sqrt(dummy));
+            r = 2 * std::sqrt(beta);
+
+            val(0, 0) = -term + r * std::cos(dummy / 3);
+            val(1, 1) = -term + r * std::cos((dummy + 2 * M_PI) / 3);
+            val(2, 2) = -term + r * std::cos((dummy - 2 * M_PI) / 3);
+        }
+    }
+
+    Matrix<T> tmp(mat), l(n, n), u(n, n), col(n, 1);
+    if(n == 2)
+    {
+        for(int i=0; i<n; ++i)
+        {
+            col.setCol(0, 0);
+            tmp -= Identity<T>(n) * val(i, i);
+            rref(tmp, l, u);
+            col(1, 0) = 1;
+            if(std::abs(u(0, 1)) < ERR || std::abs(u(0, 0)) < ERR)
+            {
+                col(0, 0) = 1;
+            }
+            else
+            {
+                col(0, 0) = -u(0, 1) / u(0, 0);
+            }
+
+            col /= std::sqrt((Transpos(col) * col)(0, 0));
+            vec.setCol(i, col);
+            tmp = mat;
+        }
+    }
+    else
+    {
+        for(int i=0; i<n; ++i)
+        {
+            col.setCol(0, 0);
+            tmp -= Identity<T>(n) * val(i, i);
+            rref(tmp, l, u);
+            if(std::abs(check) < ERR)
+            {
+                if(std::abs(u(0, 0)) < ERR)
+                {
+                    for(int k=0; k<n; ++k)
+                    {
+                        vec(k, k) = 1;
+                        i++;
+                    }
+                }
+                else
+                {
+                    for(int k=2; k>0; --k)
+                    {
+                        col(k, 0) = 1;
+                        col(0, 0) = -u(0, k) / u(0, 0);
+                        col /= std::sqrt((Transpos(col) * col)(0, 0));
+                        vec.setCol(i, col);
+                        i++;
+                    }
+                }
+            }
+            else
+            {
+                if(std::abs(u(1, 1)) < ERR)
+                {
+                    col(1, 0) = 1;
+                }
+                else
+                {
+                    col(2, 0) = 1;
+                    col(1, 0) = -u(1, 2) / u(1, 1);
+                }
+
+                col(0, 0) = -(u(0, 1) * col(1, 0) + u(0, 2) * col(2, 0)) / u(0, 0);
+                col /= std::sqrt((Transpos(col) * col)(0, 0));
+                vec.setCol(i, col);
+            }
+            tmp = mat;
+        }
     }
 }

@@ -79,6 +79,9 @@ void Matrix<T>::resize(int new_row, int new_col)
             data[i] = &mdata[i * new_col];
         }
 
+        _row = (_row < new_row) ? _row : new_row;
+        _col = (_col < new_col) ? _col : new_col;
+
         for(int i=0; i<_row && tmp.size()>0; ++i)
         {
             for(int j=0; j<_col; ++j)

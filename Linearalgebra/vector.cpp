@@ -330,6 +330,17 @@ Vector<T> pn(const Vector<T>& vec1 , const Vector<T>& vec2)
 }
 
 template<typename T>
+bool IsLT(const std::vector< Vector<T> > v)
+{
+    Matrix<T> res(v);
+
+    if(Rank(res)!=v.size())
+        return false;
+    else
+        return true;
+}
+
+template<typename T>
 std::vector< Vector<T> > ob(const std::vector< Vector<T> > v)
 {
     std::vector< Vector<T> > res;
@@ -359,6 +370,3 @@ T max(const Vector<T>& v)
 
     return v(maxid);
 }
-
-
-
